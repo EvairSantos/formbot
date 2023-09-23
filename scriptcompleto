@@ -1,0 +1,97 @@
+# Atualize o sistema
+sudo apt-get update
+sudo apt-get upgrade -y
+
+# Instale o Python e o pip
+sudo apt-get install python3 python3-pip -y
+
+# Instale o virtualenv
+sudo pip3 install virtualenv
+sudo iptables -A INPUT -p tcp --dport 202 -j ACCEPT
+
+# Crie um diretório para o projeto
+mkdir /root/meus_arquivos
+cd /root/meus_arquivos
+
+# Crie um ambiente virtual
+virtualenv myenv
+source myenv/bin/activate
+
+# Instale o Flask
+pip install flask
+
+# Crie o arquivo "app.py"
+cat <<EOL > app.py
+from flask import Flask, request, render_template
+import requests
+
+app = Flask(__name__, template_folder='/root/meus_arquivos/templates')
+
+@app.route('/receber-dados', methods=['GET', 'POST'])
+def receber_dados():
+    endereco_ip = request.remote_addr
+    if request.method == 'POST':
+        nome = request.form.get('nome')
+        email = request.form.get('email')
+        whatsapp = request.form.get('whatsapp')
+        motivo_contato = request.form.get('motivo_contato')
+        bot_token = '6493564005:AAH7n9RJYJtDhSKCDgfNsRUlwy3p0jf3q9Q'
+        chat_id = '571923494'
+        mensagem = f'Dados do formulário:\nNome: {nome}\nEmail: {email}\nWhatsApp: {whatsapp}\nMotivo de Contato: {motivo_contato}\nEndereço IP: {endereco_ip}'
+        url = f'https://api.telegram.org/bot{bot_token}/sendMessage?chat_id={chat_id}&text={mensagem}'
+        response = requests.get(url)
+        return render_template('sucesso.html')
+    return 'Esta rota aceita solicitações GET e POST.'
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=202)
+EOL
+
+# Crie a pasta "templates"
+mkdir templates
+
+# Crie o arquivo "sucesso.html"
+cat <<EOL > templates/sucesso.html
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sucesso</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            color: green; 
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); 
+        }
+        p {
+            color: green;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3)
+        }
+        .thanks {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Formulário enviado com sucesso!</h1>
+    <p>Retornamos o seu contato muito breve.</p>
+    <p class="thanks">Obrigado por nos escolher.</p>
+</body>
+</html>
+EOL
+
+# Instale as dependências necessárias
+pip install requests
+
+# Ative o ambiente virtual
+source myenv/bin/activate
+
+# Inicie o aplicativo Flask
+nohup python /root/meus_arquivos/app.py > /root/meus_arquivos/flask.log 2>&1 &
